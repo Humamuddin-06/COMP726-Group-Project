@@ -141,8 +141,7 @@
 <div class="topbar"></div>
 <div class="page">
 <div class="wrap">
-  <img src="aut_logo.png" alt="AUT logo" class="aut-logo">
-  <h1>Lecturer dashboard</h1>
+ <img src="aut_logo.png" alt="AUT logo" class="aut-logo">   
   <p class="session">COMP726 — live check-ins from the deployed contract</p>
 
   <div class="walletbar">
@@ -150,6 +149,13 @@
     <button class="connect" id="connectBtn">Connect Wallet</button>
   </div>
   <div class="error" id="loadError" style="display:none;"></div>
+
+  <div class="walletbar" style="justify-content: space-between;">
+    <input type="number" id="newSessionId" placeholder="New session number (e.g. 2)" min="1"
+      style="flex:1; min-width:140px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--card); color:var(--text); font-size:13px;">
+    <button class="connect" id="createSessionBtn">Start New Session</button>
+  </div>
+  <div class="error" id="sessionMsg" style="display:none;"></div>
 
   <div class="stats">
     <div class="stat"><div class="num" id="pendingCount">0</div><div class="label">Pending</div></div>
@@ -163,7 +169,7 @@
 
   <div class="card" id="recordList"></div>
 
-  <p class="note">This dashboard reads real attendance records from the deployed smart contract for this prototype's known demo students. Approving a record calls <code>verifyAttendance()</code> on-chain, which marks it Approved and credits 10 points — so approving requires connecting the lecturer/admin wallet via MetaMask; nothing here is simulated. Because the contract has no built-in way to list "every student," this prototype only shows the fixed set of demo students registered for testing, not an open student directory.</p>
+  <p class="note">This dashboard reads real attendance records from the deployed smart contract for this prototype's known demo students. Approving a record calls <code>verifyAttendance()</code> on-chain, which marks it Approved and credits 10 points — so approving requires connecting the lecturer/admin wallet via MetaMask; nothing here is simulated. Because the contract has no built-in way to list "every student," this prototype only shows the fixed set of demo students registered for testing, not an open student directory. "Start New Session" calls <code>createSession()</code> on-chain, requiring the connected wallet to be the contract's administrator — each session ID can only ever be created once, so re-running attendance for the same students means starting a new session number rather than reusing an old one.</p>
 </div>
 </div>
 
@@ -196,6 +202,13 @@
         { "internalType": "uint256", "name": "recordIndex", "type": "uint256" }
       ],
       "name": "verifyAttendance", "outputs": [], "stateMutability": "nonpayable", "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "sessionId", "type": "uint256" },
+        { "internalType": "address", "name": "lecturer", "type": "address" }
+      ],
+      "name": "createSession", "outputs": [], "stateMutability": "nonpayable", "type": "function"
     }
   ];
 
@@ -340,6 +353,50 @@
     const pendingIds = pendingRecords().map(function (r) { return r.address + ':' + r.recordIndex; });
     document.getElementById('selectAll').checked = pendingIds.length > 0 && pendingIds.every(function (id) { return selected.has(id); });
   }
+
+  async function createNewSession() {
+    const msgEl = document.getElementById('sessionMsg');
+    msgEl.style.display = 'none';
+
+    if (!writeContract || !connectedAccount) {
+      msgEl.style.color = '#B23B3B';
+      msgEl.textContent = 'Connect the admin wallet first — only the administrator can create a session.';
+      msgEl.style.display = 'block';
+      return;
+    }
+
+    const idInput = document.getElementById('newSessionId');
+    const sessionId = parseInt(idInput.value, 10);
+    if (!sessionId || sessionId <= 0) {
+      msgEl.style.color = '#B23B3B';
+      msgEl.textContent = 'Enter a valid, positive session number.';
+      msgEl.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('createSessionBtn');
+    btn.disabled = true;
+    btn.textContent = 'Creating…';
+    try {
+      // The connected wallet is used both as the transaction sender (must be
+      // the admin) and as the session's assigned lecturer — this demo uses
+      // the same address for both roles, as set up in Remix.
+      await writeContract.methods.createSession(sessionId, connectedAccount).send({ from: connectedAccount, gas: 300000 });
+      msgEl.style.color = 'var(--green)';
+      msgEl.textContent = 'Session ' + sessionId + ' created. Tell students to check in with Session ID ' + sessionId + '.';
+      msgEl.style.display = 'block';
+      idInput.value = '';
+    } catch (e) {
+      msgEl.style.color = '#B23B3B';
+      msgEl.textContent = 'Could not create session: ' + (e.message || 'please try again.');
+      msgEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Start New Session';
+    }
+  }
+
+  document.getElementById('createSessionBtn').addEventListener('click', createNewSession);
 
   document.getElementById('connectBtn').addEventListener('click', connectWallet);
 
