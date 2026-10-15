@@ -259,12 +259,16 @@
     <div class="thankyou-mark">✓</div>
     <p class="thankyou-title" id="thankYouTitle">Thank you — your attendance is recorded.</p>
     <p class="thankyou-sub" id="thankYouSub">You're all set for this session. You can't submit another check-in from this device for today's session.</p>
+    <div id="pointsBadge" style="display:none; margin-top:14px; padding:10px 16px; background:var(--green-bg); border-radius:8px;">
+      <span style="font-size:20px; font-weight:700; color:var(--green);" id="pointsValue">0</span>
+      <span style="font-size:12px; color:var(--green); margin-left:6px;">points earned so far</span>
+    </div>
   </div>
 
   <hr class="divider">
   <p class="chain-label">Your attendance chain</p>
   <div id="chainWrap">
-    <p class="empty" id="emptyMsg">Enter your student ID above to view your check-in history.</p>
+    <p class="empty" id="emptyMsg">Your check-in history will appear here after you check in.</p>
     <div class="chain" id="chainList"></div>
   </div>
 
@@ -326,6 +330,11 @@
       ],
       "name": "hasCheckedIn", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
       "stateMutability": "view", "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+      "name": "points", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view", "type": "function"
     }
   ];
 
@@ -356,7 +365,7 @@
     list.innerHTML = '';
     if (!demo) {
       emptyMsg.style.display = 'block';
-      emptyMsg.textContent = 'Enter your student ID above to view your check-in history.';
+      emptyMsg.textContent = 'Your check-in history will appear here after you check in.';
       return;
     }
     try {
@@ -392,9 +401,21 @@
     document.getElementById('thankYouSection').style.display = 'block';
   }
 
-  document.getElementById('studentId').addEventListener('input', function (e) {
-    renderChain(e.target.value.trim());
-  });
+  async function showPoints(address) {
+    const badge = document.getElementById('pointsBadge');
+    try {
+      const pts = await contract.methods.points(address).call();
+      document.getElementById('pointsValue').textContent = pts;
+      badge.style.display = 'inline-block';
+    } catch (e) {
+      badge.style.display = 'none';
+    }
+  }
+
+  // The attendance-history section below the form is intentionally only
+  // populated after a check-in attempt (successful or "already checked in"),
+  // not as the student types their ID — so nobody's attendance record is
+  // revealed just by typing a number into the field.
 
   document.getElementById('checkInBtn').addEventListener('click', async function () {
     const idInput = document.getElementById('studentId');
@@ -428,6 +449,7 @@
       if (already) {
         await renderChain(id);
         showThankYou("Our records show you've already checked in for this session.");
+        await showPoints(demo.address);
         return;
       }
 
@@ -436,6 +458,7 @@
       await contract.methods.recordAttendance(sessionId).send({ from: demo.address, gas: 1000000 });
       await renderChain(id);
       showThankYou("You're all set for this session. You can't submit another check-in for this session.");
+      await showPoints(demo.address);
     } catch (e) {
       errorEl.textContent = 'Check-in failed: ' + (e.message || 'please try again.');
       errorEl.style.display = 'block';
