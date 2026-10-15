@@ -276,31 +276,14 @@
 </div>
 </div>
 
-<!-- Web3.js is loaded here so the connection code is in place. It isn't called yet — -->
-<!-- see the commented block in the script below for where it plugs in once the contract exists. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.10.4/web3.min.js"></script>
 <script src="demo-students.js"></script>
 <script>
-  // --- Real contract connection ---
+  // ==========================================================
+  // SETUP — connect to the deployed contract via Infura/Web3.js
+  // ==========================================================
   const INFURA_URL = 'https://sepolia.infura.io/v3/92534c8631e243e88acf81b37691421f';
   const CONTRACT_ADDRESS = '0xB6305569833D05f54f4F03962CD226a16a72881b';
-
-  // The session ID is no longer hardcoded: it comes from the "Session ID"
-  // field on the page (pre-filled from a ?session=2 URL parameter if the QR
-  // code / link includes one, otherwise left for the student to type in).
-  // It must match a session number already created with createSession()
-  // (now doable from the lecturer dashboard's "Start New Session" control).
-  function getSessionId() {
-    return parseInt(document.getElementById('sessionId').value, 10);
-  }
-
-  (function prefillSessionFromUrl() {
-    // This script runs at the bottom of the page, after the form already
-    // exists in the DOM, so the field can be set directly here.
-    const params = new URLSearchParams(window.location.search);
-    const fromUrl = params.get('session');
-    document.getElementById('sessionId').value = fromUrl || '1';
-  })();
 
   // Minimal ABI: only the functions this page actually calls.
   const CONTRACT_ABI = [
@@ -432,6 +415,11 @@
     const demo = findDemoStudent(id);
     if (!demo) {
       errorEl.textContent = 'This demo only supports the pre-registered demo student IDs.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (name.toLowerCase() !== demo.name.toLowerCase()) {
+      errorEl.textContent = "That name doesn't match our records for this student ID.";
       errorEl.style.display = 'block';
       return;
     }
