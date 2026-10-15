@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecturer Dashboard</title>
+<style>
+  :root {
+    --ink: #111111;
+    --parchment: #FAF6EC;
+    --card: #FFFFFF;
+    --gold: #E8621B;
+    --gold-bg: #FBE4D4;
+    --green: #2F6B3A;
+    --green-bg: #E1EEDD;
+    --text: #1A1A1A;
+    --text-soft: #6B6A62;
+    --border: #EFE4D2;
+    --banner: linear-gradient(90deg, #C8102E, #F26A21, #F7A823, #F26A21, #C8102E);
+    --font-voice: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --ink: #F2EFE6; --parchment: #141414; --card: #1E1E1E;
+      --gold: #F2894A; --gold-bg: #3A2416; --green: #8FCB9A; --green-bg: #1D3322;
+      --text: #F2EFE6; --text-soft: #AFABA0; --border: #333333;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #F2EFE6; --parchment: #141414; --card: #1E1E1E;
+    --gold: #F2894A; --gold-bg: #3A2416; --green: #8FCB9A; --green-bg: #1D3322;
+    --text: #F2EFE6; --text-soft: #AFABA0; --border: #333333;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  .topbar {
+    height: calc(10px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    background: var(--banner);
+  }
+  body {
+    margin: 0; min-height: 100%;
+    background: var(--parchment); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .page {
+    padding: 2.5rem 1.25rem calc(2.5rem + env(safe-area-inset-bottom, 0px));
+    display: flex; justify-content: center;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  .aut-logo {
+    display: block;
+    height: 100px;
+    width: auto;
+    margin: 0 auto 1.5rem;
+    border-radius: 6px;
+  }
+  h1 { font-family: var(--font-voice); font-size: 26px; font-weight: 700; color: var(--gold); text-align: center; margin: 0 0 4px; }
+  .session { font-size: 13px; color: var(--text-soft); margin: 0 0 1.25rem; text-align: center; }
+
+  .walletbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+  .walletbar .addr { font-family: var(--font-mono); font-size: 12px; color: var(--text-soft); }
+  button.connect {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border: none;
+    border-radius: 6px;
+    background: var(--gold);
+    color: #FFFFFF;
+    cursor: pointer;
+  }
+  button.connect:disabled { opacity: 0.5; cursor: default; }
+
+  .stats { display: flex; gap: 12px; margin-bottom: 1.25rem; }
+  .stat { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .stat .num { font-size: 22px; font-weight: 500; }
+  .stat .label { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+
+  .bulkbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+  .bulkbar label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  button.bulk {
+    margin-left: auto;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1.5px solid var(--gold);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--gold);
+    cursor: pointer;
+  }
+  button.bulk:disabled { opacity: 0.4; cursor: default; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .record { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .record:last-child { border-bottom: none; }
+  .record input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; }
+  .who { font-size: 15px; font-weight: 500; }
+  .meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+  .hash { font-family: var(--font-mono); font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+  .reward { font-size: 11px; color: var(--green); margin-top: 2px; }
+  .status { font-size: 12px; padding: 2px 9px; border-radius: 999px; font-weight: 500; white-space: nowrap; }
+  .status.pending { background: var(--gold-bg); color: var(--gold); }
+  .status.approved { background: var(--green-bg); color: var(--green); }
+  button.approve {
+    padding: 7px 14px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;
+    border: none; border-radius: 6px;
+    background: var(--gold); color: #FFFFFF; cursor: pointer; white-space: nowrap;
+  }
+  button.approve:active { opacity: 0.85; }
+  button.approve:disabled { opacity: 0.5; cursor: default; }
+  .empty { padding: 2rem 16px; text-align: center; font-size: 13px; color: var(--text-soft); }
+  .error { font-size: 13px; color: #B23B3B; margin: -4px 0 10px; text-align: center; }
+  .note { font-size: 12px; color: var(--text-soft); margin-top: 1.5rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="page">
+<div class="wrap">
+  <img src="aut_logo.png" alt="AUT logo" class="aut-logo">
+  <h1>Lecturer dashboard</h1>
+  <p class="session">COMP726 — live check-ins from the deployed contract</p>
+
+  <div class="walletbar">
+    <span id="walletStatus">Not connected</span>
+    <button class="connect" id="connectBtn">Connect Wallet</button>
+  </div>
+  <div class="error" id="loadError" style="display:none;"></div>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="pendingCount">0</div><div class="label">Pending</div></div>
+    <div class="stat"><div class="num" id="approvedCount">0</div><div class="label">Approved</div></div>
+  </div>
+
+  <div class="bulkbar">
+    <label><input type="checkbox" id="selectAll"> Select all pending</label>
+    <button class="bulk" id="approveSelected" disabled>Approve selected</button>
+  </div>
+
+  <div class="card" id="recordList"></div>
+
+  <p class="note">This dashboard reads real attendance records from the deployed smart contract for this prototype's known demo students. Approving a record calls <code>verifyAttendance()</code> on-chain, which marks it Approved and credits 10 points — so approving requires connecting the lecturer/admin wallet via MetaMask; nothing here is simulated. Because the contract has no built-in way to list "every student," this prototype only shows the fixed set of demo students registered for testing, not an open student directory.</p>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.10.4/web3.min.js"></script>
+<script src="demo-students.js"></script>
+<script>
+  // --- Read-only connection (works without a wallet) ---
+  const INFURA_URL = 'https://sepolia.infura.io/v3/92534c8631e243e88acf81b37691421f';
+  const CONTRACT_ADDRESS = '0xB6305569833D05f54f4F03962CD226a16a72881b';
+
+  const CONTRACT_ABI = [
+    {
+      "inputs": [{ "internalType": "address", "name": "student", "type": "address" }],
+      "name": "getStudentChain",
+      "outputs": [{
+        "components": [
+          { "internalType": "uint256", "name": "sessionId", "type": "uint256" },
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "bytes32", "name": "prevHash", "type": "bytes32" },
+          { "internalType": "bytes32", "name": "recordHash", "type": "bytes32" },
+          { "internalType": "bool", "name": "approved", "type": "bool" }
+        ],
+        "internalType": "struct AUTAttendanceRewards.AttendanceRecord[]", "name": "", "type": "tuple[]"
+      }],
+      "stateMutability": "view", "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "student", "type": "address" },
+        { "internalType": "uint256", "name": "recordIndex", "type": "uint256" }
+      ],
+      "name": "verifyAttendance", "outputs": [], "stateMutability": "nonpayable", "type": "function"
+    }
+  ];
+
+  // Demo student list now lives in the shared demo-students.js file loaded
+  // above, so this dashboard and the student check-in page always agree on
+  // the same ID/name/wallet data instead of each keeping its own copy.
+
+  const readWeb3 = new Web3(new Web3.providers.HttpProvider(INFURA_URL));
+  const readContract = new readWeb3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+
+  let writeContract = null;
+  let connectedAccount = null;
+  let records = [];
+  let selected = new Set();
+
+  function pendingRecords() { return records.filter(function (r) { return !r.approved; }); }
+
+  async function loadRecords() {
+    const errorEl = document.getElementById('loadError');
+    errorEl.style.display = 'none';
+    try {
+      const all = [];
+      for (const student of DEMO_STUDENTS) {
+        const chain = await readContract.methods.getStudentChain(student.address).call();
+        chain.forEach(function (rec, index) {
+          all.push({
+            studentId: student.studentId,
+            name: student.name,
+            address: student.address,
+            recordIndex: index,
+            sessionId: rec.sessionId,
+            timestamp: Number(rec.timestamp) * 1000,
+            recordHash: rec.recordHash,
+            approved: rec.approved
+          });
+        });
+      }
+      records = all;
+      render();
+    } catch (e) {
+      errorEl.textContent = 'Could not load records from the contract right now.';
+      errorEl.style.display = 'block';
+    }
+  }
+
+  async function connectWallet() {
+    if (!window.ethereum) {
+      document.getElementById('walletStatus').textContent = 'No wallet found — install MetaMask';
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      connectedAccount = accounts[0];
+      const injectedWeb3 = new Web3(window.ethereum);
+      writeContract = new injectedWeb3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+      document.getElementById('walletStatus').textContent = 'Connected: ' + connectedAccount.slice(0, 6) + '…' + connectedAccount.slice(-4);
+      document.getElementById('connectBtn').textContent = 'Connected';
+      document.getElementById('connectBtn').disabled = true;
+      render();
+    } catch (e) {
+      document.getElementById('walletStatus').textContent = 'Connection declined';
+    }
+  }
+
+  async function approveOne(record, btn) {
+    if (!writeContract || !connectedAccount) return;
+    if (btn) { btn.disabled = true; btn.textContent = 'Approving…'; }
+    try {
+      await writeContract.methods.verifyAttendance(record.address, record.recordIndex).send({ from: connectedAccount, gas: 500000 });
+      await loadRecords();
+    } catch (e) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Approve'; }
+      alert('Approval failed: ' + (e.message || 'please try again.'));
+    }
+  }
+
+  async function approveSelected() {
+    const ids = Array.from(selected);
+    for (const id of ids) {
+      const record = records.find(function (r) { return r.address + ':' + r.recordIndex === id; });
+      if (record) await approveOne(record, null);
+    }
+    selected.clear();
+  }
+
+  function render() {
+    const list = document.getElementById('recordList');
+    list.innerHTML = '';
+    if (!records.length) {
+      list.innerHTML = '<div class="empty">No check-ins yet.</div>';
+    }
+    const sorted = records.slice().sort(function (a, b) {
+      if (a.approved === b.approved) return b.timestamp - a.timestamp;
+      return a.approved ? 1 : -1;
+    });
+    sorted.forEach(function (r) {
+      const id = r.address + ':' + r.recordIndex;
+      const row = document.createElement('div');
+      row.className = 'record';
+      const dt = new Date(r.timestamp);
+      const statusClass = r.approved ? 'approved' : 'pending';
+      const checkboxHtml = !r.approved
+        ? '<input type="checkbox" data-id="' + id + '" ' + (selected.has(id) ? 'checked' : '') + '>'
+        : '<span style="width:16px; display:inline-block;"></span>';
+      row.innerHTML =
+        checkboxHtml +
+        '<div style="flex:1;">' +
+          '<div class="who">' + r.name + ' <span style="color:var(--text-soft); font-weight:400;">· ' + r.studentId + '</span></div>' +
+          '<div class="meta">' + dt.toLocaleString() + '</div>' +
+          '<div class="hash">' + r.recordHash.slice(0, 18) + '…</div>' +
+          (r.approved ? '<div class="reward">+10 points credited</div>' : '') +
+        '</div>' +
+        '<span class="status ' + statusClass + '">' + (r.approved ? 'Approved' : 'Pending') + '</span>';
+      if (!r.approved) {
+        const btn = document.createElement('button');
+        btn.className = 'approve';
+        btn.textContent = 'Approve';
+        btn.disabled = !writeContract;
+        btn.addEventListener('click', function () { approveOne(r, btn); });
+        row.appendChild(btn);
+      }
+      list.appendChild(row);
+    });
+
+    list.querySelectorAll('input[type="checkbox"][data-id]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        const id = cb.getAttribute('data-id');
+        if (cb.checked) selected.add(id); else selected.delete(id);
+        updateBulkBar();
+      });
+    });
+
+    document.getElementById('pendingCount').textContent = pendingRecords().length;
+    document.getElementById('approvedCount').textContent = records.length - pendingRecords().length;
+    updateBulkBar();
+  }
+
+  function updateBulkBar() {
+    const btn = document.getElementById('approveSelected');
+    btn.disabled = selected.size === 0 || !writeContract;
+    btn.textContent = selected.size ? 'Approve selected (' + selected.size + ')' : 'Approve selected';
+    const pendingIds = pendingRecords().map(function (r) { return r.address + ':' + r.recordIndex; });
+    document.getElementById('selectAll').checked = pendingIds.length > 0 && pendingIds.every(function (id) { return selected.has(id); });
+  }
+
+  document.getElementById('connectBtn').addEventListener('click', connectWallet);
+
+  document.getElementById('selectAll').addEventListener('change', function (e) {
+    const pendingIds = pendingRecords().map(function (r) { return r.address + ':' + r.recordIndex; });
+    if (e.target.checked) pendingIds.forEach(function (id) { selected.add(id); });
+    else pendingIds.forEach(function (id) { selected.delete(id); });
+    render();
+  });
+
+  document.getElementById('approveSelected').addEventListener('click', approveSelected);
+
+  loadRecords();
+</script>
+</body>
+</html>

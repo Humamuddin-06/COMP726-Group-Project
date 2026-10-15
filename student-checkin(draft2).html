@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Student Check-In</title>
+<style>
+  :root {
+    --ink: #111111;
+    --parchment: #FAF6EC;
+    --card: #FFFFFF;
+    --gold: #E8621B;
+    --gold-bg: #FBE4D4;
+    --green: #2F6B3A;
+    --green-bg: #E1EEDD;
+    --text: #1A1A1A;
+    --text-soft: #6B6A62;
+    --border: #EFE4D2;
+    --banner: linear-gradient(90deg, #C8102E, #F26A21, #F7A823, #F26A21, #C8102E);
+    --font-voice: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --ink: #F2EFE6;
+      --parchment: #141414;
+      --card: #1E1E1E;
+      --gold: #F2894A;
+      --gold-bg: #3A2416;
+      --green: #8FCB9A;
+      --green-bg: #1D3322;
+      --text: #F2EFE6;
+      --text-soft: #AFABA0;
+      --border: #333333;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #F2EFE6;
+    --parchment: #141414;
+    --card: #1E1E1E;
+    --gold: #F2894A;
+    --gold-bg: #3A2416;
+    --green: #8FCB9A;
+    --green-bg: #1D3322;
+    --text: #F2EFE6;
+    --text-soft: #AFABA0;
+    --border: #333333;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  .topbar {
+    height: calc(10px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    background: var(--banner);
+    background-size: 200% 100%;
+  }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--parchment);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .page {
+    padding: 2.5rem 1.25rem calc(2.5rem + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    justify-content: center;
+  }
+  .aut-logo {
+    display: block;
+    height: 110px;
+    width: auto;
+    margin: 0 auto 1.5rem;
+    filter: var(--logo-filter, none);
+    border-radius: 6px;
+  }
+  .card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem;
+  }
+  h1 {
+    font-family: var(--font-voice);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--gold);
+    margin: 0 0 4px;
+  }
+  .session {
+    font-size: 13px;
+    color: var(--text-soft);
+    margin: 0 0 1.75rem;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-soft);
+    margin-bottom: 6px;
+  }
+  .field { margin-bottom: 1rem; }
+  input[type="text"] {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+  }
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: none;
+    border-radius: 6px;
+    background: var(--gold);
+    color: #FFFFFF;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  button:active { opacity: 0.85; }
+  .error {
+    color: #B23B3B;
+    font-size: 13px;
+    margin: -6px 0 10px;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.75rem 0 1.25rem;
+  }
+  .chain-label {
+    font-family: var(--font-voice);
+    font-size: 15px;
+    margin: 0 0 1rem;
+  }
+  .empty {
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+  .chain {
+    position: relative;
+    padding-left: 18px;
+  }
+  .chain-item {
+    position: relative;
+    padding-bottom: 1rem;
+    border-left: 2px solid var(--border);
+    padding-left: 16px;
+    margin-left: -18px;
+  }
+  .chain-item:last-child { padding-bottom: 0; }
+  .chain-item::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--gold);
+  }
+  .row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .ts { font-size: 13px; color: var(--text-soft); }
+  .status {
+    font-size: 12px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .status.pending { background: var(--gold-bg); color: var(--gold); }
+  .status.approved { background: var(--green-bg); color: var(--green); }
+  .hash {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-soft);
+    margin-top: 2px;
+    word-break: break-all;
+  }
+  .thankyou {
+    text-align: center;
+    padding: 1.5rem 0.5rem 0.5rem;
+  }
+  .thankyou-mark {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    border-radius: 50%;
+    background: var(--green-bg);
+    color: var(--green);
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 auto 1rem;
+  }
+  .thankyou-title {
+    font-family: var(--font-voice);
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 6px;
+  }
+  .thankyou-sub {
+    font-size: 13px;
+    color: var(--text-soft);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .note {
+    font-size: 12px;
+    color: var(--text-soft);
+    margin-top: 1.5rem;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="page">
+<div class="card">
+  <img src="aut_logo.png" alt="AUT logo" class="aut-logo"> 
+  <h1>Student check-in</h1>
+  <p class="session">Session: COMP726 — scanned just now</p>
+
+  <div id="formSection">
+    <div class="field">
+      <label for="studentId">Student ID</label>
+      <input type="text" id="studentId" placeholder="e.g. 20012345" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="studentName">Full name</label>
+      <input type="text" id="studentName" placeholder="e.g. Alex Chen" autocomplete="off">
+    </div>
+    <div class="error" id="formError" style="display:none;"></div>
+    <button id="checkInBtn">Check in</button>
+  </div>
+
+  <div id="thankYouSection" class="thankyou" style="display:none;">
+    <div class="thankyou-mark">✓</div>
+    <p class="thankyou-title" id="thankYouTitle">Thank you — your attendance is recorded.</p>
+    <p class="thankyou-sub" id="thankYouSub">You're all set for this session. You can't submit another check-in from this device for today's session.</p>
+  </div>
+
+  <hr class="divider">
+  <p class="chain-label">Your attendance chain</p>
+  <div id="chainWrap">
+    <p class="empty" id="emptyMsg">Enter your student ID above to view your check-in history.</p>
+    <div class="chain" id="chainList"></div>
+  </div>
+
+  <p class="note">This page submits real check-ins to the deployed smart contract on Sepolia. For this prototype, a small set of demo student IDs are pre-linked to test wallets the page controls, so no real wallet is needed to check in — a production version would replace this with a secure backend service rather than keeping keys in the page itself.</p>
+</div>
+</div>
+
+<!-- Web3.js is loaded here so the connection code is in place. It isn't called yet — -->
+<!-- see the commented block in the script below for where it plugs in once the contract exists. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.10.4/web3.min.js"></script>
+<script src="demo-students.js"></script>
+<script>
+  // --- Real contract connection ---
+  const INFURA_URL = 'https://sepolia.infura.io/v3/92534c8631e243e88acf81b37691421f';
+  const CONTRACT_ADDRESS = '0xB6305569833D05f54f4F03962CD226a16a72881b';
+  const SESSION_ID = 1; // must match a session you created with createSession() in Remix
+
+  // Minimal ABI: only the functions this page actually calls.
+  const CONTRACT_ABI = [
+    {
+      "inputs": [{ "internalType": "uint256", "name": "sessionId", "type": "uint256" }],
+      "name": "recordAttendance", "outputs": [], "stateMutability": "nonpayable", "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "address", "name": "student", "type": "address" }],
+      "name": "getStudentChain",
+      "outputs": [{
+        "components": [
+          { "internalType": "uint256", "name": "sessionId", "type": "uint256" },
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "bytes32", "name": "prevHash", "type": "bytes32" },
+          { "internalType": "bytes32", "name": "recordHash", "type": "bytes32" },
+          { "internalType": "bool", "name": "approved", "type": "bool" }
+        ],
+        "internalType": "struct AUTAttendanceRewards.AttendanceRecord[]", "name": "", "type": "tuple[]"
+      }],
+      "stateMutability": "view", "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "address", "name": "", "type": "address" }
+      ],
+      "name": "hasCheckedIn", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "view", "type": "function"
+    }
+  ];
+
+  const web3 = new Web3(new Web3.providers.HttpProvider(INFURA_URL));
+  const contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+
+  // Demo student list (ID, name, wallet, private key) now lives in the
+  // shared demo-students.js file loaded above, so this page and the
+  // lecturer dashboard always agree on the same data instead of each
+  // keeping their own separate, hand-typed copy.
+  // "A real deployment would NEVER hold private keys in front-end code — this
+  // stands in for a proper secure backend service, kept simple for this demo.
+  // See the report's Limitations/Future Work for this stated trade-off.
+  function findDemoStudent(studentId) {
+    return DEMO_STUDENTS.find(function (s) { return s.studentId === studentId; });
+  }
+
+  function setLoading(isLoading) {
+    const btn = document.getElementById('checkInBtn');
+    btn.disabled = isLoading;
+    btn.textContent = isLoading ? 'Checking in…' : 'Check in';
+  }
+
+  async function renderChain(studentId) {
+    const demo = findDemoStudent(studentId);
+    const emptyMsg = document.getElementById('emptyMsg');
+    const list = document.getElementById('chainList');
+    list.innerHTML = '';
+    if (!demo) {
+      emptyMsg.style.display = 'block';
+      emptyMsg.textContent = 'Enter your student ID above to view your check-in history.';
+      return;
+    }
+    try {
+      const chain = await contract.methods.getStudentChain(demo.address).call();
+      if (!chain.length) {
+        emptyMsg.style.display = 'block';
+        emptyMsg.textContent = 'No check-ins yet.';
+        return;
+      }
+      emptyMsg.style.display = 'none';
+      chain.slice().reverse().forEach(function (rec) {
+        const item = document.createElement('div');
+        item.className = 'chain-item';
+        const statusClass = rec.approved ? 'approved' : 'pending';
+        const dt = new Date(Number(rec.timestamp) * 1000);
+        item.innerHTML =
+          '<div class="row-top">' +
+            '<span class="ts">' + dt.toLocaleString() + '</span>' +
+            '<span class="status ' + statusClass + '">' + (rec.approved ? 'Approved' : 'Pending') + '</span>' +
+          '</div>' +
+          '<div class="hash">' + rec.recordHash.slice(0, 18) + '…</div>';
+        list.appendChild(item);
+      });
+    } catch (e) {
+      emptyMsg.style.display = 'block';
+      emptyMsg.textContent = 'Could not load your history right now.';
+    }
+  }
+
+  function showThankYou(message) {
+    document.getElementById('formSection').style.display = 'none';
+    document.getElementById('thankYouSub').textContent = message;
+    document.getElementById('thankYouSection').style.display = 'block';
+  }
+
+  document.getElementById('studentId').addEventListener('input', function (e) {
+    renderChain(e.target.value.trim());
+  });
+
+  document.getElementById('checkInBtn').addEventListener('click', async function () {
+    const idInput = document.getElementById('studentId');
+    const nameInput = document.getElementById('studentName');
+    const errorEl = document.getElementById('formError');
+    const id = idInput.value.trim();
+    const name = nameInput.value.trim();
+
+    if (!id || !name) {
+      errorEl.textContent = 'Enter both your student ID and name.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    const demo = findDemoStudent(id);
+    if (!demo) {
+      errorEl.textContent = 'This demo only supports the pre-registered demo student IDs.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    errorEl.style.display = 'none';
+
+    try {
+      const already = await contract.methods.hasCheckedIn(SESSION_ID, demo.address).call();
+      if (already) {
+        await renderChain(id);
+        showThankYou("Our records show you've already checked in for this session.");
+        return;
+      }
+
+      setLoading(true);
+      web3.eth.accounts.wallet.add(demo.privateKey);
+      await contract.methods.recordAttendance(SESSION_ID).send({ from: demo.address, gas: 1000000 });
+      await renderChain(id);
+      showThankYou("You're all set for this session. You can't submit another check-in for this session.");
+    } catch (e) {
+      errorEl.textContent = 'Check-in failed: ' + (e.message || 'please try again.');
+      errorEl.style.display = 'block';
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+</body>
+</html>
