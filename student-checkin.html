@@ -234,11 +234,15 @@
 <div class="topbar"></div>
 <div class="page">
 <div class="card">
-  <img src="aut_logo.png" alt="AUT logo" class="aut-logo"> 
+  <img src="aut_logo.png" alt="AUT logo" class="aut-logo">
   <h1>Student check-in</h1>
-  <p class="session">Session: COMP726 — scanned just now</p>
+  <p class="session">COMP726 — scan, confirm the session, and check in</p>
 
   <div id="formSection">
+    <div class="field">
+      <label for="sessionId">Session ID <span style="font-weight:400;">(ask your lecturer if unsure)</span></label>
+      <input type="text" inputmode="numeric" id="sessionId" placeholder="e.g. 1" autocomplete="off">
+    </div>
     <div class="field">
       <label for="studentId">Student ID</label>
       <input type="text" id="studentId" placeholder="e.g. 20012345" autocomplete="off">
@@ -276,7 +280,23 @@
   // --- Real contract connection ---
   const INFURA_URL = 'https://sepolia.infura.io/v3/92534c8631e243e88acf81b37691421f';
   const CONTRACT_ADDRESS = '0xB6305569833D05f54f4F03962CD226a16a72881b';
-  const SESSION_ID = 1; // must match a session you created with createSession() in Remix
+
+  // The session ID is no longer hardcoded: it comes from the "Session ID"
+  // field on the page (pre-filled from a ?session=2 URL parameter if the QR
+  // code / link includes one, otherwise left for the student to type in).
+  // It must match a session number already created with createSession()
+  // (now doable from the lecturer dashboard's "Start New Session" control).
+  function getSessionId() {
+    return parseInt(document.getElementById('sessionId').value, 10);
+  }
+
+  (function prefillSessionFromUrl() {
+    // This script runs at the bottom of the page, after the form already
+    // exists in the DOM, so the field can be set directly here.
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('session');
+    document.getElementById('sessionId').value = fromUrl || '1';
+  })();
 
   // Minimal ABI: only the functions this page actually calls.
   const CONTRACT_ABI = [
@@ -396,8 +416,15 @@
     }
     errorEl.style.display = 'none';
 
+    const sessionId = getSessionId();
+    if (!sessionId || sessionId <= 0) {
+      errorEl.textContent = 'Enter a valid session ID.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
     try {
-      const already = await contract.methods.hasCheckedIn(SESSION_ID, demo.address).call();
+      const already = await contract.methods.hasCheckedIn(sessionId, demo.address).call();
       if (already) {
         await renderChain(id);
         showThankYou("Our records show you've already checked in for this session.");
@@ -406,7 +433,7 @@
 
       setLoading(true);
       web3.eth.accounts.wallet.add(demo.privateKey);
-      await contract.methods.recordAttendance(SESSION_ID).send({ from: demo.address, gas: 1000000 });
+      await contract.methods.recordAttendance(sessionId).send({ from: demo.address, gas: 1000000 });
       await renderChain(id);
       showThankYou("You're all set for this session. You can't submit another check-in for this session.");
     } catch (e) {
