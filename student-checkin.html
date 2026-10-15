@@ -321,6 +321,14 @@
 
   const web3 = new Web3(new Web3.providers.HttpProvider(INFURA_URL));
   const contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+    function getSessionId() {
+    return parseInt(document.getElementById('sessionId').value, 10);
+  }
+
+  (function prefillSessionFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('sessionId').value = params.get('session') || '1';
+  })();
 
   // Demo student list (ID, name, wallet, private key) now lives in the
   // shared demo-students.js file loaded above, so this page and the
