@@ -1,15 +1,4 @@
-// Shared demo-student data for this COMP726 prototype.
-//
-// Both the student check-in page and the lecturer dashboard load this same
-// file, so they always agree on which student ID maps to which wallet and
-// which display name — instead of each page keeping its own separate,
-// hand-typed copy that can drift out of sync.
-//
-// Deliberately kept OFF the blockchain: the smart contract only ever stores
-// a wallet address, never a name (see the privacy note in
-// AUTAttendanceRewards.sol) — a public ledger is not an appropriate place to
-// store real students' names. This file is the prototype's substitute for a
-// proper off-chain student directory a production system would use instead.
+
 const DEMO_STUDENTS = [
   {
     studentId: '20012345',
