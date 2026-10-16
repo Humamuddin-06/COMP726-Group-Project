@@ -14,7 +14,7 @@ const DEMO_STUDENTS = [
   },
   {
     studentId: '20004412',
-    name: 'Karam',
+    name: 'Bruce Wayne',
     address: '0xcde9b88EeE148E9c45E1BdfB929508431109026D',
     privateKey: '0x415d1a7f6f964c0191944590c61735f6b732ea5fb3d2ec8af8d2b70018f74358'
   }
