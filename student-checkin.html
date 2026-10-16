@@ -334,9 +334,6 @@
   // shared demo-students.js file loaded above, so this page and the
   // lecturer dashboard always agree on the same data instead of each
   // keeping their own separate, hand-typed copy.
-  // "A real deployment would NEVER hold private keys in front-end code — this
-  // stands in for a proper secure backend service, kept simple for this demo.
-  // See the report's Limitations/Future Work for this stated trade-off.
   function findDemoStudent(studentId) {
     return DEMO_STUDENTS.find(function (s) { return s.studentId === studentId; });
   }
@@ -402,9 +399,7 @@
   }
 
   // The attendance-history section below the form is intentionally only
-  // populated after a check-in attempt (successful or "already checked in"),
-  // not as the student types their ID — so nobody's attendance record is
-  // revealed just by typing a number into the field.
+  // populated after a check-in attempt (successful or "already checked in") 
 
   document.getElementById('checkInBtn').addEventListener('click', async function () {
     const idInput = document.getElementById('studentId');
